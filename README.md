@@ -52,13 +52,46 @@ git clone https://github.com/yourusername/email-connector.git
 cd email-connector
 ```
 
-### 2. 安装依赖
+### 2. 安装 uv (Python 包管理工具)
 
+uv 是一个极快的 Python 包和项目管理器。
+
+**Linux/macOS**:
 ```bash
-pip install -r requirements.txt
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-### 3. 配置邮箱
+**Windows**:
+```powershell
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+或者使用 pip 安装:
+```bash
+pip install uv
+```
+
+### 3. 创建虚拟环境并安装依赖
+
+```bash
+# 创建虚拟环境
+uv venv
+
+# 激活虚拟环境
+# Linux/macOS:
+source .venv/bin/activate
+# Windows:
+.venv\Scripts\activate
+
+# 使用 uv 安装依赖
+uv pip sync requirements.txt
+# 或者
+uv pip install -r requirements.txt
+```
+
+**提示**: 使用 `uv pip sync` 可以确保环境与 requirements.txt 完全一致,会移除未列出的包。
+
+### 4. 配置邮箱
 
 复制示例配置文件:
 
@@ -438,9 +471,18 @@ email-connector/
 ### 开发环境设置
 
 ```bash
-# 安装开发依赖
-pip install -r requirements.txt
-pip install -e .[dev]
+# 创建虚拟环境(如果还没有)
+uv venv
+
+# 激活虚拟环境
+source .venv/bin/activate  # Linux/macOS
+# .venv\Scripts\activate    # Windows
+
+# 安装项目依赖
+uv pip sync requirements.txt
+
+# 安装开发依赖(如果有 setup.py)
+uv pip install -e .[dev]
 
 # 运行测试(待完善)
 pytest tests/
@@ -450,6 +492,15 @@ black src/
 
 # 类型检查
 mypy src/
+```
+
+**提示**: 如果需要添加新的依赖包,使用:
+```bash
+# 添加新包
+uv pip install package_name
+
+# 更新 requirements.txt
+uv pip freeze > requirements.txt
 ```
 
 ### 代码规范

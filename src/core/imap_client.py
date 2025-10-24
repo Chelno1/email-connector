@@ -441,7 +441,11 @@ class IMAPClient:
             self.logger.info(f"正在搜索邮件 - 文件夹: {folder}, 条件: {criteria}")
             
             # 使用UID搜索
-            status, data = self.imap.uid('search', 'ALL' if criteria == 'ALL' else None, criteria)
+            # 使用UID搜索,根据AGENTS.md的规则,不要在criteria前加'ALL'前缀
+            if criteria == 'ALL':
+                status, data = self.imap.uid('search', None, 'ALL')
+            else:
+                status, data = self.imap.uid('search', None, criteria)
             
             if status != 'OK':
                 raise IMAPOperationError(f"搜索邮件失败: {data}")

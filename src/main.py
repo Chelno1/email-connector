@@ -225,8 +225,8 @@ class EmailConnector:
             
             # 4. 应用数量限制
             if args.limit and len(uids) > args.limit:
-                self.logger.info(f"应用数量限制,只处理前 {args.limit} 封邮件")
-                uids = uids[:args.limit]
+                self.logger.info(f"应用数量限制,只处理最新 {args.limit} 封邮件")
+                uids = uids[-args.limit:]  # 获取最新的N封(列表末尾)
             
             # 5. 批量获取和解析
             self.logger.info("正在获取和解析邮件...")
@@ -289,7 +289,7 @@ class EmailConnector:
         
         self.logger.debug(f"IMAP搜索条件: {search_str}")
         
-        return client.search_messages(search_str)
+        return client.search_messages(folder=args.folder, criteria=search_str)
     
     def _format_imap_date(self, date_str: str) -> str:
         """
@@ -375,7 +375,7 @@ class EmailConnector:
             with CSVWriter(str(output_path)) as writer:
                 writer.write_messages(emails)
                 stats = writer.get_stats()
-                self.stats['saved'] = stats['written']
+                self.stats['saved'] = stats['write_count']
             
             self.logger.info(f"✓ 成功保存 {self.stats['saved']} 封邮件到CSV")
             
