@@ -135,11 +135,23 @@ def parse_args(args=None):
         help='CSV输出文件路径(默认: output/csv/emails_<timestamp>.csv)'
     )
     output_group.add_argument(
-        '--save-attachments',
+        '--filename',
         type=str,
-        dest='save_attachments',
+        dest='filename',
+        help='CSV文件名(默认: emails_<timestamp>.csv)'
+    )
+    output_group.add_argument(
+        '--attachment-dir',
+        type=str,
+        dest='attachment_dir',
         metavar='DIR',
-        help='保存附件到指定目录'
+        help='附件保存目录(默认: output/attachments)'
+    )
+    output_group.add_argument(
+        '--no-attachments',
+        action='store_true',
+        dest='no_attachments',
+        help='禁用附件保存(默认会保存附件)'
     )
     output_group.add_argument(
         '--mark-as-read',
@@ -242,8 +254,8 @@ def validate_args(args, parser):
                 parser.error(f"输出目录不存在: {args.output}")
     
     # 验证附件目录
-    if args.save_attachments:
-        attach_dir = Path(args.save_attachments)
+    if hasattr(args, 'attachment_dir') and args.attachment_dir:
+        attach_dir = Path(args.attachment_dir)
         # 不要求目录已存在,程序会自动创建
 
 
@@ -312,7 +324,9 @@ def main():
     # 输出参数
     print("\n[输出参数]")
     print(f"  CSV输出: {args.output or '(默认路径)'}")
-    print(f"  保存附件: {args.save_attachments or '不保存'}")
+    print(f"  CSV文件名: {args.filename or '(使用时间戳)'}")
+    attach_status = '不保存' if args.no_attachments else (args.attachment_dir or '(默认目录)')
+    print(f"  保存附件: {attach_status}")
     print(f"  标记已读: {args.mark_as_read}")
     
     # 其他参数

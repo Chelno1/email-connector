@@ -80,9 +80,16 @@ class EmailConnector:
             if emails:
                 self._save_to_csv(emails, args)
                 
-                # 6. 保存附件(可选)
-                if args.save_attachments:
-                    self._save_attachments(emails, args.save_attachments)
+                # 6. 保存附件(默认启用,除非明确禁用)
+                if not getattr(args, 'no_attachments', False):
+                    # 从CLI参数或配置获取附件目录
+                    attach_dir = getattr(args, 'attachment_dir', None)
+                    if not attach_dir:
+                        output_config = self.config.get_output_config()
+                        attach_dir = output_config['attachment_dir']
+                    
+                    if attach_dir:
+                        self._save_attachments(emails, attach_dir)
             else:
                 self.logger.warning("没有找到符合条件的邮件")
             
@@ -174,10 +181,20 @@ class EmailConnector:
             self.logger.info("  筛选条件: 无(获取所有邮件)")
         
         # 输出配置
-        output = args.output or self._get_default_output_path()
+        custom_filename = getattr(args, 'filename', None)
+        output = args.output or self._get_default_output_path(custom_filename)
         self.logger.info(f"  CSV输出: {output}")
-        if args.save_attachments:
-            self.logger.info(f"  附件保存: {args.save_attachments}")
+        
+        # 显示附件配置
+        if not getattr(args, 'no_attachments', False):
+            attach_dir = getattr(args, 'attachment_dir', None)
+            if not attach_dir:
+                output_config = self.config.get_output_config()
+                attach_dir = output_config['attachment_dir']
+            self.logger.info(f"  附件保存: {attach_dir}")
+        else:
+            self.logger.info("  附件保存: 禁用")
+        
         if args.mark_as_read:
             self.logger.info("  处理后标记为已读: 是")
         
@@ -363,7 +380,8 @@ class EmailConnector:
             args: CLI参数对象
         """
         # 确定输出路径
-        output_path = args.output or self._get_default_output_path()
+        custom_filename = getattr(args, 'filename', None)
+        output_path = args.output or self._get_default_output_path(custom_filename)
         
         # 确保输出目录存在
         output_file = Path(output_path)
@@ -419,17 +437,29 @@ class EmailConnector:
         
         self.logger.info(f"✓ 成功保存 {saved_count} 个附件")
     
-    def _get_default_output_path(self) -> str:
+    def _get_default_output_path(self, custom_filename: str = None) -> str:
         """
         获取默认输出路径
+        
+        Args:
+            custom_filename: 自定义文件名(可选)
         
         Returns:
             str: 默认CSV输出路径
         """
         output_config = self.config.get_output_config()
         output_dir = output_config['csv_dir']
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"emails_{timestamp}.csv"
+        
+        if custom_filename:
+            # 如果提供了自定义文件名，确保有.csv扩展名
+            if not custom_filename.endswith('.csv'):
+                custom_filename += '.csv'
+            filename = custom_filename
+        else:
+            # 使用时间戳生成文件名
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"emails_{timestamp}.csv"
+        
         return str(Path(output_dir) / filename)
     
     def _print_statistics(self):
