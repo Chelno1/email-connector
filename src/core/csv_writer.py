@@ -63,6 +63,7 @@ class CSVWriter:
         'body_text',
         'has_attachment',
         'attachment_names',
+        'attachment_paths',
         'attachment_count',
         'labels'
     ]

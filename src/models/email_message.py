@@ -205,6 +205,7 @@ class EmailMessage:
             'body_text': self.body_text,
             'has_attachment': str(self.has_attachment),
             'attachment_names': self.get_attachment_names(),
+            'attachment_paths': self.get_attachment_paths(),
             'attachment_count': len(self.attachments),
             'labels': ';'.join(self.labels)
         }
@@ -336,6 +337,21 @@ class EmailMessage:
             'report.pdf;photo.jpg'
         """
         return ';'.join([att.filename for att in self.attachments])
+    
+    def get_attachment_paths(self) -> str:
+        """
+        返回所有附件保存路径的字符串(用分号分隔)
+        
+        Returns:
+            附件路径字符串,如 "/path/to/file1.pdf;/path/to/image.png"
+            如果附件未保存,则返回空字符串
+            
+        Examples:
+            >>> msg.get_attachment_paths()
+            '/output/attachments/20240115/report.pdf;/output/attachments/20240115/photo.jpg'
+        """
+        paths = [att.saved_path for att in self.attachments if att.saved_path]
+        return ';'.join(paths) if paths else ''
     
     def __repr__(self) -> str:
         """

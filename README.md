@@ -159,19 +159,20 @@ python email_connector.py --unseen --sender "client@example.com" --from-date 202
 |------|------|------|------|
 | `--host` | 文本 | IMAP服务器地址 | `--host imap.gmail.com` |
 | `--port` | 数字 | IMAP服务器端口 | `--port 993` |
-| `--user` | 文本 | 邮箱账号 | `--user user@gmail.com` |
+| `--email` | 文本 | 邮箱账号 | `--email user@gmail.com` |
 | `--password` | 文本 | 邮箱密码 | `--password "your_password"` |
 | `--folder` | 文本 | 邮箱文件夹 | `--folder INBOX` |
-| `--output` | 文本 | 输出CSV文件路径 | `--output emails.csv` |
+| `--output` | 文本 | CSV输出完整路径 | `--output /path/to/emails.csv` |
+| `--filename` | 文本 | CSV文件名(仅文件名) | `--filename my-emails` |
 | `--limit` | 数字 | 限制邮件数量 | `--limit 100` |
 | `--from-date` | 日期 | 起始日期(YYYY-MM-DD) | `--from-date 2024-01-01` |
 | `--to-date` | 日期 | 结束日期(YYYY-MM-DD) | `--to-date 2024-12-31` |
 | `--unseen` | 开关 | 仅获取未读邮件 | `--unseen` |
 | `--sender` | 文本 | 按发件人筛选 | `--sender "boss@company.com"` |
 | `--subject` | 文本 | 按主题关键词筛选 | `--subject "报告"` |
-| `--save-attachments` | 开关 | 保存附件 | `--save-attachments` |
 | `--attachment-dir` | 文本 | 附件保存目录 | `--attachment-dir ./files` |
-| `--mark-read` | 开关 | 处理后标记为已读 | `--mark-read` |
+| `--no-attachments` | 开关 | 禁用附件保存 | `--no-attachments` |
+| `--mark-as-read` | 开关 | 处理后标记为已读 | `--mark-as-read` |
 | `--log-level` | 文本 | 日志级别 | `--log-level DEBUG` |
 
 ### 使用场景示例
@@ -182,14 +183,24 @@ python email_connector.py --unseen --sender "client@example.com" --from-date 202
 python email_connector.py --output all_emails.csv
 ```
 
-#### 2. 获取未读邮件并保存附件
+#### 2. 获取未读邮件并保存附件(默认保存到output/attachments)
 
 ```bash
 python email_connector.py \
   --unseen \
-  --save-attachments \
-  --attachment-dir ./attachments \
-  --output unread_emails.csv
+  --filename unread_emails
+  
+# 或指定附件目录
+python email_connector.py \
+  --unseen \
+  --attachment-dir ./my-attachments \
+  --filename unread_emails
+  
+# 如果不想保存附件
+python email_connector.py \
+  --unseen \
+  --no-attachments \
+  --filename unread_emails
 ```
 
 #### 3. 按月份导出邮件
@@ -247,15 +258,17 @@ IMAP_PORT=993
 IMAP_USE_SSL=true
 
 # 邮箱认证
-EMAIL_USER=your.email@gmail.com
+EMAIL_ACCOUNT=your.email@gmail.com
 EMAIL_PASSWORD=your_app_password
 
 # 默认邮箱文件夹
 DEFAULT_FOLDER=INBOX
 
 # 输出配置
-DEFAULT_OUTPUT_DIR=./output/csv
-DEFAULT_ATTACHMENT_DIR=./output/attachments
+OUTPUT_CSV_DIR=output/csv
+OUTPUT_CSV_FILENAME=
+OUTPUT_ATTACHMENT_DIR=output/attachments
+OUTPUT_SAVE_ATTACHMENTS=true
 
 # 邮件处理配置
 DEFAULT_LIMIT=100
@@ -289,30 +302,30 @@ python email_connector.py --host imap.outlook.com --port 993
 
 | 字段名 | 说明 | 示例 |
 |--------|------|------|
+| `email_account` | 邮箱账户 | `user@gmail.com` |
 | `message_id` | 邮件唯一标识 | `<abc123@gmail.com>` |
-| `uid` | IMAP UID | `12345` |
-| `date` | 发送日期时间 | `2024-01-15 14:30:00` |
-| `sender` | 发件人 | `sender@example.com` |
-| `sender_name` | 发件人姓名 | `张三` |
-| `recipients` | 收件人列表 | `user1@example.com; user2@example.com` |
-| `cc` | 抄送列表 | `cc@example.com` |
-| `bcc` | 密送列表 | `bcc@example.com` |
+| `thread_id` | 会话ID | `<thread123>` |
 | `subject` | 邮件主题 | `重要通知` |
+| `date` | 发送日期时间 | `2024-01-15 14:30:00` |
+| `from` | 发件人 | `张三 <sender@example.com>` |
+| `to` | 收件人列表 | `用户1 <user1@example.com>; user2@example.com` |
+| `cc` | 抄送列表 | `cc@example.com` |
 | `body_text` | 纯文本内容 | `邮件正文...` |
-| `body_html` | HTML内容 | `<html>...</html>` |
-| `has_attachments` | 是否有附件 | `True/False` |
-| `attachments` | 附件列表 | `file1.pdf; file2.doc` |
-| `is_read` | 是否已读 | `True/False` |
-| `labels` | 邮件标签 | `Important; Work` |
-| `size` | 邮件大小(字节) | `12345` |
+| `has_attachment` | 是否有附件 | `True/False` |
+| `attachment_names` | 附件文件名列表 | `file1.pdf;file2.doc` |
+| `attachment_paths` | 附件本地保存路径 | `/path/to/file1.pdf;/path/to/file2.doc` |
+| `attachment_count` | 附件数量 | `2` |
+| `labels` | 邮件标签 | `Important;Work` |
 
 **CSV示例**:
 
 ```csv
-message_id,uid,date,sender,sender_name,subject,body_text,has_attachments
-<abc@example.com>,101,2024-01-15 10:00:00,boss@company.com,老板,周会通知,请参加周五的会议,False
-<def@example.com>,102,2024-01-15 11:30:00,client@partner.com,客户,合同文件,请查收附件中的合同,True
+email_account,message_id,subject,date,from,has_attachment,attachment_names,attachment_paths
+user@gmail.com,<abc@example.com>,周会通知,2024-01-15 10:00:00,老板 <boss@company.com>,False,,0
+user@gmail.com,<def@example.com>,合同文件,2024-01-15 11:30:00,客户 <client@partner.com>,True,contract.pdf,/home/user/output/attachments/20240115/contract.pdf,1
 ```
+
+**注意**: `attachment_paths` 字段只有在附件被保存后才会有值，如果使用 `--no-attachments` 参数，该字段将为空。
 
 ## 🔧 常见邮箱配置
 
@@ -390,10 +403,11 @@ python email_connector.py --from-date 2024-02-01 --to-date 2024-02-29 --output f
 
 ### Q3: 附件保存在哪里?
 
-**A**: 
-- 默认位置: `./output/attachments/`
-- 自定义位置: 使用 `--attachment-dir` 参数
-- 附件按邮件UID分目录存储
+**A**:
+- **默认行为**: 程序会自动保存附件到 `output/attachments/` 目录
+- **自定义位置**: 使用 `--attachment-dir` 参数指定其他目录
+- **禁用保存**: 使用 `--no-attachments` 参数禁用附件保存
+- 附件按邮件日期分目录存储(如: `output/attachments/20240115/`)
 
 ### Q4: CSV文件中文乱码怎么办?
 
